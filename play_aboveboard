@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+
+from aboveboard.game import Game
+from aboveboard.engine import Engine
+from aboveboard.move import Move
+from aboveboard.piece import PieceColor
+from argparse import ArgumentParser
+from random import choice
+
+
+# Callback to print a progress bar.
+def calculating_callback(legal_moves_len, move, score):
+    print(".", end="", flush=True)
+
+
+# Collect arguments from CLI call.
+parser = ArgumentParser(
+    prog='play_aboveboard',
+    description='Play a game of chess against the Aboveboard engine.'
+)
+parser.add_argument('-c', '--color',
+    choices=["white", "black", "random"],
+    default="random",
+    type=str,
+    help="The color of the pieces you want to play: white, black or random. Default: random."
+)
+parser.add_argument('-l', '--level',
+    choices=range(5),
+    default=2,
+    type=int,
+    help="The level of difficulty: 0 (ridiculously easy) to 4 (medium). Default: 2."
+)
+args = parser.parse_args()
+
+
+# Define the color of the player's pieces.
+if args.color == "white":
+    player_color = PieceColor.WHITE
+elif args.color == "black":
+    player_color = PieceColor.BLACK
+else: # args.color == "random"
+    player_color = choice([PieceColor.WHITE, PieceColor.BLACK])
+
+
+# Print some useful information.
+print("\nWelcome! Let's have some fun playing chess.")
+print("Use long algebraic notation to indicate your moves.")
+print("Examples: e2-e4, f3xg5, O-O, c7-c8=Q, d5xe6 e.p.\n")
+
+
+# Play the game.
+g = Game()
+e = Engine(min_max_depth=args.level)
+while not g.is_finished():
+    print(g.to_string(reverse=(player_color==PieceColor.BLACK)))
+    if g.turn == player_color:
+        while True:
+            print("Type your move: ", end="")
+            move_code = input()
+            try:
+                g.apply_move(Move.from_notation(move_code))
+                break
+            except Exception:
+                continue
+        print()
+    else: # g.turn != player_color
+        print("Calculating", end="", flush=True)
+        best_move = e.get_best_move(g, move_eval_callback=calculating_callback)
+        print(f"\nChosen move: {best_move.to_string()}\n")
+        g.apply_move(best_move)
+print(g.to_string(reverse=(player_color==PieceColor.BLACK)))
+if g.winner() == player_color:
+    print("You win!")
+elif g.winner() is None:
+    print("It's a draw!")
+else: # g.winner() != player_color
+    print("You lose!")
+print()
