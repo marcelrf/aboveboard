@@ -1,6 +1,6 @@
 # Aboveboard
 
-Aboveboard is a simple chess engine written just for fun.
+A simple chess engine written just for fun.
 
 ## How to play
 Python3 required. No need to install any libraries.
